@@ -1,0 +1,859 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BLACK System Dashboard</title>
+    <style>
+        :root {
+            --primary: #6366f1;
+            --primary-hover: #4f46e5;
+            --success: #22c55e;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --bg-primary: #0f172a;
+            --bg-secondary: #1e293b;
+            --bg-tertiary: #334155;
+            --text-primary: #f1f5f9;
+            --text-secondary: #94a3b8;
+            --border: #475569;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            overflow: hidden;
+        }
+
+        /* 布局 */
+        .dashboard {
+            display: grid;
+            grid-template-columns: 280px 1fr 320px;
+            grid-template-rows: 64px 1fr;
+            height: 100vh;
+        }
+
+        /* 顶部栏 */
+        .header {
+            grid-column: 1 / -1;
+            background: var(--bg-secondary);
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 24px;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 20px;
+            font-weight: 600;
+        }
+
+        .logo-icon {
+            width: 32px;
+            height: 32px;
+            background: linear-gradient(135deg, var(--primary), #8b5cf6);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 12px;
+        }
+
+        /* 侧边栏 */
+        .sidebar {
+            background: var(--bg-secondary);
+            border-right: 1px solid var(--border);
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        .section-title {
+            font-size: 12px;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 12px;
+            margin-top: 24px;
+        }
+
+        .section-title:first-child {
+            margin-top: 0;
+        }
+
+        .agent-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .agent-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px;
+            background: var(--bg-tertiary);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .agent-item:hover {
+            background: var(--bg-primary);
+            transform: translateX(4px);
+        }
+
+        .agent-item.active {
+            border-left: 3px solid var(--primary);
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--success);
+        }
+
+        .status-dot.offline {
+            background: var(--danger);
+        }
+
+        .agent-info {
+            flex: 1;
+        }
+
+        .agent-name {
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .agent-type {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        /* 主内容区 */
+        .main-content {
+            padding: 24px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+
+        /* 命令输入区 */
+        .command-section {
+            background: var(--bg-secondary);
+            border-radius: 12px;
+            padding: 20px;
+        }
+
+        .command-input-wrapper {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .command-input {
+            flex: 1;
+            padding: 14px 18px;
+            background: var(--bg-primary);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text-primary);
+            font-size: 15px;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .command-input:focus {
+            border-color: var(--primary);
+        }
+
+        .command-input::placeholder {
+            color: var(--text-secondary);
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-hover);
+        }
+
+        .btn-secondary {
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+        }
+
+        .btn-secondary:hover {
+            background: var(--border);
+        }
+
+        .quick-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .quick-action {
+            padding: 8px 16px;
+            background: var(--bg-tertiary);
+            border-radius: 20px;
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .quick-action:hover {
+            background: var(--primary);
+            transform: scale(1.05);
+        }
+
+        /* 节点状态区 */
+        .nodes-section {
+            background: var(--bg-secondary);
+            border-radius: 12px;
+            padding: 20px;
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+
+        .section-title-large {
+            font-size: 16px;
+            font-weight: 600;
+        }
+
+        .nodes-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+            gap: 12px;
+        }
+
+        .node-card {
+            background: var(--bg-tertiary);
+            border-radius: 8px;
+            padding: 16px;
+            text-align: center;
+            transition: all 0.2s;
+        }
+
+        .node-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 16px rgba(0,0,0,0.3);
+        }
+
+        .node-card.online {
+            border-left: 3px solid var(--success);
+        }
+
+        .node-card.offline {
+            border-left: 3px solid var(--danger);
+            opacity: 0.6;
+        }
+
+        .node-id {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--primary);
+        }
+
+        .node-name {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-top: 4px;
+        }
+
+        /* 右侧面板 */
+        .right-panel {
+            background: var(--bg-secondary);
+            border-left: 1px solid var(--border);
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 24px;
+        }
+
+        .stat-card {
+            background: var(--bg-tertiary);
+            border-radius: 8px;
+            padding: 16px;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 24px;
+            font-weight: 600;
+            color: var(--primary);
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-top: 4px;
+        }
+
+        /* 任务列表 */
+        .task-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .task-item {
+            background: var(--bg-tertiary);
+            border-radius: 8px;
+            padding: 12px;
+        }
+
+        .task-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .task-id {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        .task-status {
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 500;
+        }
+
+        .task-status.running {
+            background: rgba(99, 102, 241, 0.2);
+            color: var(--primary);
+        }
+
+        .task-status.completed {
+            background: rgba(34, 197, 94, 0.2);
+            color: var(--success);
+        }
+
+        .task-status.failed {
+            background: rgba(239, 68, 68, 0.2);
+            color: var(--danger);
+        }
+
+        .task-desc {
+            font-size: 13px;
+            color: var(--text-primary);
+        }
+
+        /* 控制台 */
+        .console-section {
+            background: var(--bg-secondary);
+            border-radius: 12px;
+            padding: 20px;
+            margin-top: auto;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .console-output {
+            font-family: 'Fira Code', monospace;
+            font-size: 12px;
+            color: var(--text-secondary);
+            line-height: 1.6;
+        }
+
+        .console-line {
+            padding: 2px 0;
+        }
+
+        .console-line.success {
+            color: var(--success);
+        }
+
+        .console-line.error {
+            color: var(--danger);
+        }
+
+        .console-line.info {
+            color: var(--primary);
+        }
+
+        /* 动画 */
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .pulse {
+            animation: pulse 2s infinite;
+        }
+
+        /* 响应式 */
+        @media (max-width: 1200px) {
+            .dashboard {
+                grid-template-columns: 240px 1fr;
+            }
+            .right-panel {
+                display: none;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .dashboard {
+                grid-template-columns: 1fr;
+                grid-template-rows: auto 1fr auto;
+            }
+            .sidebar {
+                display: none;
+            }
+        }
+
+        /* 滚动条 */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--bg-primary);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--border);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--text-secondary);
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard">
+        <!-- 顶部栏 -->
+        <header class="header">
+            <div class="logo">
+                <div class="logo-icon">⚡</div>
+                <span>BLACK System</span>
+            </div>
+<div class="header-actions">
+                <button class="btn btn-secondary" onclick="refreshStatus()">
+                    🔄 刷新
+                </button>
+                <button class="btn btn-primary" onclick="toggleFullscreen()">
+                    ⛶ 全屏
+                </button>
+            </div>
+        </header>
+
+        <!-- 侧边栏 -->
+        <aside class="sidebar">
+            <div class="section-title">Agent 状态</div>
+            <div class="agent-list" id="agentList">
+                <!-- Agent列表动态生成 -->
+            </div>
+
+            <div class="section-title">快捷入口</div>
+            <div class="agent-list">
+                <div class="agent-item" onclick="openDashboard('ufo')">
+                    <div class="status-dot online"></div>
+                    <div class="agent-info">
+                        <div class="agent-name">UFO³ Galaxy</div>
+                        <div class="agent-type">主控系统</div>
+                    </div>
+                </div>
+                <div class="agent-item" onclick="openDashboard('minimax')">
+                    <div class="status-dot online"></div>
+                    <div class="agent-info">
+                        <div class="agent-name">MiniMax</div>
+                        <div class="agent-type">对话助手</div>
+                    </div>
+                </div>
+                <div class="agent-item" onclick="openDashboard('android')">
+                    <div class="status-dot online"></div>
+                    <div class="agent-info">
+                        <div class="agent-name">Android</div>
+                        <div class="agent-type">移动设备</div>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- 主内容区 -->
+        <main class="main-content">
+            <!-- 命令输入 -->
+            <section class="command-section">
+                <div class="command-input-wrapper">
+                    <input type="text" class="command-input" id="commandInput" 
+                           placeholder="输入命令或点击麦克风语音输入..." 
+                           onkeypress="handleCommandKeypress(event)">
+                    <button class="btn btn-primary" onclick="executeCommand()">
+                        🚀 执行
+                    </button>
+                    <button class="btn btn-secondary" onclick="startVoiceInput()">
+                        🎤 语音
+                    </button>
+                </div>
+                <div class="quick-actions">
+                    <div class="quick-action" onclick="quickCommand('搜索今天新闻')">📰 搜索新闻</div>
+                    <div class="quick-action" onclick="quickCommand('打开微信')">💬 打开微信</div>
+                    <div class="quick-action" onclick="quickCommand('帮我写代码')">💻 写代码</div>
+                    <div class="quick-action" onclick="quickCommand('截图')">📸 截图</div>
+                    <div class="quick-action" onclick="quickCommand('天气怎么样')">🌤️ 天气</div>
+                    <div class="quick-action" onclick="quickCommand('播放音乐')">🎵 播放音乐</div>
+                </div>
+            </section>
+
+            <!-- 节点状态 -->
+            <section class="nodes-section">
+                <div class="section-header">
+                    <div class="section-title-large">🌐 系统节点状态</div>
+                    <div style="font-size: 12px; color: var(--text-secondary);">
+                        共 <span id="nodeCount">0</span> 个节点
+                    </div>
+                </div>
+                <div class="nodes-grid" id="nodesGrid">
+                    <!-- 节点动态生成 -->
+                </div>
+            </section>
+
+            <!-- 控制台 -->
+            <section class="console-section">
+                <div class="section-title-large">📋 执行日志</div>
+                <div class="console-output" id="consoleOutput">
+                    <div class="console-line info">[系统] BLACK Dashboard 已启动</div>
+                    <div class="console-line info">[系统] 正在连接 BLACK Core...</div>
+                </div>
+            </section>
+        </main>
+
+        <!-- 右侧面板 -->
+        <aside class="right-panel">
+            <div class="section-title">📊 系统统计</div>
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-value" id="onlineAgents">0</div>
+                    <div class="stat-label">在线Agent</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="runningTasks">0</div>
+                    <div class="stat-label">运行任务</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="completedTasks">0</div>
+                    <div class="stat-label">完成任务</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="systemHealth">100%</div>
+                    <div class="stat-label">系统健康</div>
+                </div>
+            </div>
+
+            <div class="section-title">📝 最近任务</div>
+            <div class="task-list" id="taskList">
+                <!-- 任务动态生成 -->
+            </div>
+        </aside>
+    </div>
+
+    <script>
+        // BLACK Dashboard 客户端
+        class BlackDashboard {
+            constructor() {
+                this.ws = null;
+                this.reconnectAttempts = 0;
+                this.maxReconnectAttempts = 5;
+                this.init();
+            }
+
+            async init() {
+                await this.connectWebSocket();
+                await this.loadAgents();
+                await this.loadNodes();
+                this.startStatusPolling();
+            }
+
+            async connectWebSocket() {
+                try {
+                    this.ws = new WebSocket('ws://localhost:9001/ws');
+                    
+                    this.ws.onopen = () => {
+                        console.log('WebSocket connected');
+                        this.reconnectAttempts = 0;
+                        this.log('success', '系统连接成功');
+                    };
+
+                    this.ws.onmessage = (event) => {
+                        const data = JSON.parse(event.data);
+                        this.handleMessage(data);
+                    };
+
+                    this.ws.onclose = () => {
+                        console.log('WebSocket disconnected');
+                        this.attemptReconnect();
+                    };
+
+                    this.ws.onerror = (error) => {
+                        console.error('WebSocket error:', error);
+                        this.log('error', '连接错误');
+                    };
+                } catch (error) {
+                    console.error('Failed to connect:', error);
+                    this.log('error', '连接失败: ' + error.message);
+                }
+            }
+
+            attemptReconnect() {
+                if (this.reconnectAttempts < this.maxReconnectAttempts) {
+                    this.reconnectAttempts++;
+                    this.log('info', `尝试重连 (${this.reconnectAttempts}/${this.maxReconnectAttempts})...`);
+                    setTimeout(() => this.connectWebSocket(), 3000);
+                } else {
+                    this.log('error', '无法连接到BLACK Core');
+                }
+            }
+
+            handleMessage(data) {
+                switch (data.type) {
+                    case 'status':
+                        this.updateStats(data.data);
+                        break;
+                    case 'dispatched':
+                        this.log('success', `任务已提交: ${data.task_id}`);
+                        break;
+                    case 'waking':
+                        this.log('info', `执行命令: ${data.command}`);
+                        break;
+                }
+            }
+
+            async loadAgents() {
+                try {
+                    const response = await fetch('http://localhost:9001/api/agents');
+                    const data = await response.json();
+                    this.renderAgents(data.agents);
+                } catch (error) {
+                    console.error('Failed to load agents:', error);
+                    this.renderAgents([]);
+                }
+            }
+
+            async loadNodes() {
+                try {
+                    const response = await fetch('http://localhost:9001/api/status');
+                    const data = await response.json();
+                    this.renderNodes(data);
+                } catch (error) {
+                    console.error('Failed to load nodes:', error);
+                    this.renderNodes({ total_nodes: 0, nodes_online: 0 });
+                }
+            }
+
+            renderAgents(agents) {
+                const container = document.getElementById('agentList');
+                container.innerHTML = agents.map(agent => `
+                    <div class="agent-item ${agent.status === 'online' ? 'active' : ''}">
+                        <div class="status-dot ${agent.status !== 'online' ? 'offline' : ''}"></div>
+                        <div class="agent-info">
+                            <div class="agent-name">${agent.name}</div>
+                            <div class="agent-type">${agent.type}</div>
+                        </div>
+                    </div>
+                `).join('');
+            }
+
+            renderNodes(data) {
+                const container = document.getElementById('nodesGrid');
+                const nodeCount = data.total_nodes || 0;
+                const onlineCount = data.nodes_online || 0;
+                
+                document.getElementById('nodeCount').textContent = nodeCount;
+
+                // 生成节点卡片
+                const nodes = [];
+                for (let i = 0; i < Math.min(nodeCount, 20); i++) {
+                    nodes.push({
+                        id: String(i).padStart(2, '0'),
+                        name: `Node ${String(i).padStart(2, '0')}`,
+                        online: i < onlineCount
+                    });
+                }
+
+                container.innerHTML = nodes.map(node => `
+                    <div class="node-card ${node.online ? 'online' : 'offline'}">
+                        <div class="node-id">${node.id}</div>
+                        <div class="node-name">${node.name}</div>
+                    </div>
+                `).join('');
+            }
+
+            updateStats(data) {
+                document.getElementById('onlineAgents').textContent = data.agents_online || 0;
+                document.getElementById('runningTasks').textContent = data.tasks_running || 0;
+                document.getElementById('completedTasks').textContent = data.tasks_completed || 0;
+                
+                const healthRate = data.health_rate || '100%';
+                document.getElementById('systemHealth').textContent = healthRate;
+            }
+
+            async executeCommand(command) {
+                if (!command.trim()) return;
+
+                this.log('info', `执行命令: ${command}`);
+
+                try {
+                    const response = await fetch('http://localhost:9001/api/wake', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            command: command,
+                            source: 'dashboard',
+                            mode: 'text'
+                        })
+                    });
+
+                    const data = await response.json();
+                    
+                    if (data.success) {
+                        this.log('success', `任务已提交: ${data.task_id}`);
+                        document.getElementById('commandInput').value = '';
+                    } else {
+                        this.log('error', `执行失败: ${data.message}`);
+                    }
+                } catch (error) {
+                    this.log('error', `请求失败: ${error.message}`);
+                }
+            }
+
+            log(type, message) {
+                const container = document.getElementById('consoleOutput');
+                const line = document.createElement('div');
+                line.className = `console-line ${type}`;
+                line.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+                container.appendChild(line);
+                container.scrollTop = container.scrollHeight;
+
+                // 限制日志行数
+                while (container.children.length > 100) {
+                    container.removeChild(container.firstChild);
+                }
+            }
+
+            startStatusPolling() {
+                setInterval(() => this.loadNodes(), 30000);
+                setInterval(() => this.loadAgents(), 30000);
+            }
+        }
+
+        // 初始化
+        let dashboard;
+
+        function init() {
+            dashboard = new BlackDashboard();
+            window.dashboard = dashboard;
+        }
+
+        function handleCommandKeypress(event) {
+            if (event.key === 'Enter') {
+                executeCommand();
+            }
+        }
+
+        function executeCommand() {
+            const input = document.getElementById('commandInput');
+            const command = input.value;
+            dashboard.executeCommand(command);
+        }
+
+        function quickCommand(command) {
+            document.getElementById('commandInput').value = command;
+            executeCommand();
+        }
+
+        function startVoiceInput() {
+            if ('webkitSpeechRecognition' in window) {
+                const recognition = new webkitSpeechRecognition();
+                recognition.lang = 'zh-CN';
+                recognition.onresult = (event) => {
+                    const command = event.results[0][0].transcript;
+                    document.getElementById('commandInput').value = command;
+                    executeCommand();
+                };
+                recognition.start();
+            } else {
+                alert('您的浏览器不支持语音识别');
+            }
+        }
+
+        async function refreshStatus() {
+            await dashboard.loadAgents();
+            await dashboard.loadNodes();
+            dashboard.log('success', '状态已刷新');
+        }
+
+        function openDashboard(type) {
+            const urls = {
+                'ufo': 'http://localhost:3000',
+                'minimax': 'minimax://open',
+                'android': '#'
+            };
+            
+            if (type === 'minimax' && !urls.minimax.startsWith('http')) {
+                dashboard.log('info', '正在启动 MiniMax...');
+            } else {
+                window.open(urls[type], '_blank');
+            }
+        }
+
+        function toggleFullscreen() {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen();
+            } else {
+                document.exitFullscreen();
+            }
+        }
+
+        // 页面加载完成后初始化
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>
